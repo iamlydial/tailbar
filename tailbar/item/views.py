@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from .models import Item
 from .forms import NewItemForm
 
@@ -15,10 +15,29 @@ def detail(request, pk):
     })
 
 def new(request):
-    form = NewItemForm()
+    # Check if the HTTP request method is POST (usually when a form is submitted).
+    if request.method == 'POST':
+        # Create a form instance with the data from the POST request and any uploaded files.
+        form = NewItemForm(request.POST, request.FILES)
+
+        # Check if the form data is valid.
+        if form.is_valid():
+            # Create a new item object but don't save it to the database yet (commit=False).
+            item = form.save(commit=False)
+            
+            # Set the 'created_by' field of the item to the current user.
+            item.created_by = request.user
+            
+            # Save the item to the database.
+            item.save()
+
+            # Redirect the user to the detail view of the newly created item.
+            return redirect('item:detail', pk=item.id)
+    else:
+        # If it's a GET request or the form is not valid, create an empty form to display.
+        form = NewItemForm()
+
     return render(request, 'item/form.html', {
         'form': form, 
         'title': 'New Item'
     })
-
-
