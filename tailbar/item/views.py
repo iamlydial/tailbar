@@ -9,22 +9,32 @@ from .forms import NewItemForm, EditItemForm
 
 
 def items(request):
+    # Get the 'query' parameter from the request's GET data, default to an empty string if not present
     query = request.GET.get('query', '')
+
+    # Get the 'category' parameter from the request's GET data, default to 0 if not present
     category_id = request.GET.get('category', 0)
+
+    # Retrieve all categories from the database
     categories = Category.objects.all()
+
+    # Retrieve all items from the database that are not marked as sold
     items = Item.objects.filter(is_sold=False)
 
+    # If a 'category' parameter is specified in the request, filter the items by that category
     if category_id:
         items = items.filter(category_id=category_id)
 
+    # If a 'query' parameter is specified in the request, filter the items by name or description
     if query:
         items = items.filter(Q(name__icontains=query) | Q(description__icontains=query))
 
+    # Render the 'items/items.html' template with the filtered items, query, categories, and category_id
     return render(request, 'item/items.html', {
-        'items': items,
-        'query': query,
-        'categories': categories,
-        'category_id': int(category_id)
+        'items': items,             # Pass the filtered items to the template
+        'query': query,             # Pass the query parameter to the template
+        'categories': categories,   # Pass all categories to the template
+        'category_id': int(category_id)  # Pass the category_id after converting it to an integer
     })
 
 def detail(request, pk):
